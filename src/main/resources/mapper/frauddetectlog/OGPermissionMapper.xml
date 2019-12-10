@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.og.ogfrauddetect.dao.frauddetectlog.OGPermissionMapper">
+
+    <resultMap id="BaseResultMap" type="com.og.ogfrauddetect.entity.OGPermission">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="parent_Id" jdbcType="BIGINT" property="parentId"/>
+        <result column="url" jdbcType="VARCHAR" property="url"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, name, parentId, url
+    </sql>
+
+    <select id="queryPermissionByUser" resultMap="BaseResultMap">
+        select * from og_permission where id in(
+            select permission_id from og_role_permission where role_id in(
+                select role_id from og_user_role where user_id in(
+                    select id from og_user where name = #{username}
+                )
+            )
+        )
+        order by id desc
+    </select>
+</mapper>

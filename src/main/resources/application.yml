@@ -1,0 +1,44 @@
+server:
+  port: 8082
+
+spring:
+  datasource:
+    blocklist-datasource:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      jdbc-url: jdbc:mysql://localhost:3306/db_name?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC
+      username: account
+      password: password
+    fraud-detect-datasource:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      jdbc-url: jdbc:mysql://localhost:3306/og_cashplatformbetout?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC
+      username: account
+      password: password
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      # https://github.com/brettwooldridge/HikariCP
+      pool-name: OGHikariConnectionPool
+      connection-timeout: 30000 # waiting connection pool assign time, default 30 s
+      minimum-idle: 10 # default 10 ms
+      maximum-pool-size: 10 # fomula：core * 2 + HD count
+      idle-timeout: 600000 # connection idle time, if over, release，default 10 min
+      read-only: false #if only read，setting true，safety，default false
+#  resources:
+#    static-locations: classpath:/static/ # default is static
+
+#  mvc:
+#    static-path-pattern: /** # default is /**
+
+  thymeleaf:
+#    prefix: classpath:/templates/ # default is templates
+#    suffix: .html # default is .html
+#    mode: HTML # default is HTML
+    cache: false # only for developer
+#    encoding: UTF-8 # default is UTF-8
+
+#logging:
+#  level:
+#    root: info
+mybatis-plus:
+#  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true # default is true

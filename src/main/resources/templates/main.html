@@ -1,0 +1,298 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>main page</title>
+
+    <style th:include="utils :: utilCSS">
+        input[type='checkbox'] {
+            width: 20px;
+            height:20px;
+        }
+    </style>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script th:src="@{/jquery-3.4.1.min.js}"></script>
+    <script th:src="@{/bootstrap-4.3.1-dist/js/bootstrap.js}"></script>
+    <script th:src="@{/layui/layui.all.js}"></script>
+    <script th:include="utils :: utilJS"></script>
+    <link rel="stylesheet" th:href="@{/bootstrap-4.3.1-dist/css/bootstrap.css}"/>
+
+    <script type="text/javascript" th:inline="javascript">
+        $(() => {
+            show(1);
+            /*<![CDATA[*/
+            let loginUser = /*[[${session.loginUser}]]*/ 'ANONYMOUS';
+            /*]]>*/
+            $('#topRight').text('　登入者為：' + loginUser.name);
+
+            $('#doSearch').click(() => {
+                let blocklistName = $('#blocklistName').val().trim();
+                if (blocklistName != '') {
+                    showOne(blocklistName);
+                } else {
+                    show(1);
+                }
+            });
+        });
+
+        let showOne = (username) => {
+            $.ajax({
+                type: "POST",
+                url: "/blocklist/showOne",
+                data: {
+                    username: username
+                },
+                beforeSend: () => {
+                    loader = layer.load(1, {
+                        time: 2 * 1000
+                    });
+                },
+                success: function (result) {
+                    layer.close(loader);
+
+                    getPermission(); // 權限判斷
+                    getList(result, false); // 取得黑名單列表
+                    $('#pageFunction').empty().append('<li class="page-item active"><a class="page-link">1</a></li>');
+                    getButtons(); // 取得新增和刪除按鈕
+                    changeColor();
+                    showFunctionList(); // 顯示功能列表
+                }
+            });
+        };
+
+        var loader;
+        let show = (pageNumber) => {
+            $.ajax({
+                type: "POST",
+                url: "/blocklist/showAll",
+                data: {
+                    currentPage: pageNumber
+                },
+                beforeSend: () => {
+                    loader = layer.load(1, {
+                        time: 2 * 1000
+                    });
+                },
+                success: function (result) {
+                    layer.close(loader);
+
+                    getPermission(); // 權限判斷
+                    getList(result, true); // 取得黑名單列表
+                    getPages(result); // 取得分頁
+                    getButtons(); // 取得新增和刪除按鈕
+                    changeColor();
+                    showFunctionList(); // 顯示功能列表
+                }
+            });
+        };
+
+        let getButtons = () => {
+            // 新增和刪除按鈕的判斷
+            let addAndDelButton = '<li>帳號名稱：<input id="usernameAdd" placeholder="username" size="30"/>';
+            addAndDelButton += '&nbsp;理由：<input id="remarkAdd" placeholder="remark" size="100"/>';
+            addAndDelButton += '<input type="button" id="doAdd" value="新增"/><br/>';
+            addAndDelButton += '<li><input type="button" id="doDelete" value="刪除"/><br/>';
+
+            if (isAddAndDel) {
+                $('#addAndDel').empty().append(addAndDelButton);
+            }
+            doAddEvent();
+            doDeleteEvent();
+        };
+
+        let getList = (result, multy) => {
+            // 表單邏輯
+            let headList = "<tr>";
+            if (isAddAndDel) {
+                headList += "<th>．</th>";
+            }
+            headList += "<th>sn</th>";
+            headList += "<th style='display:none'>id</th>";
+            headList += "<th>username</th>";
+            headList += "<th>createtime</th>";
+            headList += "<th>remark</th>";
+            headList += "</tr>";
+            $('#tableHead').empty().append(
+                headList
+            );
+
+            let bodyList = "";
+            if (multy) {
+                $.each(result.records, (i, obj) => {
+                    bodyList += "<tr>";
+                    if (isAddAndDel) {
+                        bodyList += "<td><input type='checkbox' name='blocklistId' value=" + obj.username + "></td>";
+                    }
+                    bodyList += "<td>" + (i + 1) + "</td>";
+                    bodyList += "<td style='display:none'>" + obj.id + "</td>";
+                    bodyList += "<td>" + obj.username + "</td>";
+                    bodyList += "<td>" + obj.createtime.substring(0, 19).replace("T", " ") + "</td>";
+                    bodyList += "<td>" + obj.remark + "</td>";
+                    bodyList += "</tr>";
+                });
+            } else {
+                if (result != '') {
+                    bodyList += "<tr>";
+                    if (isAddAndDel) {
+                        bodyList += "<td><input type='checkbox' name='blocklistId' value=" + result.id + "></td>";
+                    }
+                    bodyList += "<td>1</td>";
+                    bodyList += "<td style='display:none'>" + result.id + "</td>";
+                    bodyList += "<td>" + result.username + "</td>";
+                    bodyList += "<td>" + result.createtime.substring(0, 19).replace("T", " ") + "</td>";
+                    bodyList += "<td>" + result.remark + "</td>";
+                    bodyList += "</tr>";
+                }
+            }
+
+            $('#tableBody').empty().append(bodyList);
+        };
+
+
+        isAddAndDel = false;
+        isLog = false;
+        let getPermission = () => {
+            /*<![CDATA[*/
+            let userPermission = /*[[${session.userPermission}]]*/ null;
+            /*]]>*/
+
+            let permissionNum = userPermission.split(",");
+            for (let x of permissionNum) {
+                if (x == 6 || x == 7) {
+                    isLog = true;
+                    isAddAndDel = true;
+                    break;
+                }
+                if (x == 4 || x == 5) {
+                    isAddAndDel = true;
+                }
+            }
+        };
+
+        // var allNum = /^\d+$/g;
+        let doAddEvent = () => {
+            $('#doAdd').click(() => {
+                let usernameAdd = $('#usernameAdd').val().trim();
+                let remarkAdd = $('#remarkAdd').val().trim();
+
+                if (usernameAdd == '') {
+                    layer.tips('帳號名稱必需輸入！', '#usernameAdd', {
+                        tips: 2
+                    });
+                    return;
+                }
+
+                if (remarkAdd == '') {
+                    layer.tips('理由必需輸入！', '#remarkAdd', {
+                        tips: 2
+                    });
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "/blocklist/add",
+                    data: {
+                        username: usernameAdd,
+                        remark: remarkAdd
+                    },
+                    beforeSend: () => {
+                        loader = layer.load(1, {
+                            time: 2 * 1000
+                        });
+                    },
+                    success: function (result) {
+                        layer.close(loader);
+                        if (result > 0) {
+                            show(1);
+                        } else {
+                            layer.msg("新增失數，原因:" + result, {
+                                time: 6000, icon: 5, shift: 6
+                            });
+                        }
+                    }
+                });
+            });
+        };
+
+        let doDeleteEvent = () => {
+            $('#doDelete').click(() => {
+                let blocklist = $('input[name="blocklistId"]:checked');
+                if (blocklist.length > 0) {
+                    let usernames = '';
+                    $('input[name="blocklistId"]:checked').each(function (i, v) {
+                        usernames += ',' + v.value;
+                    });
+
+                    let confirmDel = layer.confirm('確定刪除嗎？', {
+                        btn: ['確定', '取消'],
+                        icon: 3 // 0~6 可選
+                    }, () => {
+                        $.ajax({
+                            type: "POST",
+                            url: "/blocklist/delMany",
+                            data: {
+                                usernames: usernames.substring(1)
+                            },
+                            beforeSend: () => {
+                                loader = layer.load(1, {
+                                    time: 2 * 1000
+                                });
+                            },
+                            success: function (result) {
+                                layer.close(loader);
+                                layer.close(confirmDel);
+                                if (result > 0) {
+                                    show(1);
+                                } else {
+                                    layer.msg("刪除失數，原因:" + result, {
+                                        time: 6000, icon: 5, shift: 6
+                                    });
+                                }
+                            }
+                        });
+                    });
+                } else {
+                    layer.tips('請勾選要刪除的帳號！', '#doDelete', {
+                        tips: 2
+                    });
+                    return;
+                }
+            });
+        };
+
+        let showFunctionList = () => {
+            if (isLog) {
+                $('#functionList').empty()
+                    .append('&nbsp;&nbsp;<a class="menu" href="/log/fraudDetect">查詢 log</a>');
+            }
+        };
+    </script>
+
+</head>
+<body>
+<div id="topRight" align="left"></div>
+<a class="menu" href="/" onclick="logout()">&nbsp;登出</a>
+<a class="menu" href="/perm/add">使用者管理</a>
+<a>查詢黑名單</a>
+<span id="functionList"></span>
+<hr>
+<!--<div class="container">-->
+<div class="tit">黑名單列表</div>
+<ul>
+<li>帳號名稱：<input id="blocklistName" size="30"/>
+<input type="button" id="doSearch" value="查詢"/><br/>
+<div id="addAndDel"></div>
+</ul>
+<table class="table table-bordered">
+    <thead id="tableHead"></thead>
+    <tbody id="tableBody"></tbody>
+</table>
+
+<nav aria-label="Page navigation example">
+    <ul id="pageFunction" class="pagination pg-blue"></ul>
+</nav>
+<!--</div>-->
+</body>
+</html>

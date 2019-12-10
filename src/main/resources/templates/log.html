@@ -1,0 +1,117 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>log page</title>
+
+    <style th:include="utils :: utilCSS">
+    </style>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script th:src="@{/jquery-3.4.1.min.js}"></script>
+    <script th:src="@{/bootstrap-4.3.1-dist/js/bootstrap.js}"></script>
+    <script th:src="@{/layui/layui.all.js}"></script>
+    <script th:include="utils :: utilJS"></script>
+    <link rel="stylesheet" th:href="@{/bootstrap-4.3.1-dist/css/bootstrap.css}"/>
+
+    <script type="text/javascript" th:inline="javascript">
+        var ogUserName = '';
+        $(() => {
+            show(1);
+            let loginUser = /*[[${session.loginUser}]]*/ 'ANONYMOUS';
+            $('#topRight').text('　登入者為：' + loginUser.name);
+
+            $('#doSearch').click(() => {
+                ogUserName = $('#ogUserName').val().trim();
+                show(1);
+            });
+        });
+
+        let show = (pageNumber) => {
+            $.ajax({
+                type: "POST",
+                url: "/log/show",
+                data: {
+                    ogUserName: ogUserName,
+                    currentPage: pageNumber
+                },
+                beforeSend: () => {
+                    loader = layer.load(1, {
+                        time: 2 * 1000
+                    });
+                },
+                success: function (result) {
+                    layer.close(loader);
+                    getList(result); // 取得Log列表
+                    getPages(result); // 取得分頁
+                    changeColor();
+                }
+            });
+        };
+
+        let getList = (result) => {
+            // 表單邏輯
+            let headList = "<tr>";
+            headList += "<th>sn</th>";
+            headList += "<th style='display:none'>id</th>";
+            headList += "<th>username</th>";
+            headList += "<th>createtime</th>";
+            headList += "<th>operator</th>";
+            headList += "<th>apiBlocklistUsername</th>";
+            headList += "</tr>";
+            $('#tableHead').empty().append(
+                headList
+            );
+
+            let bodyList = "";
+            $.each(result.records, (i, obj) => {
+                bodyList += "<tr>";
+                bodyList += "<td>" + (i + 1) + "</td>";
+                bodyList += "<td style='display:none'>" + obj.id + "</td>";
+                bodyList += "<td>" + obj.username + "</td>";
+                bodyList += "<td>" + obj.createtime.substring(0, 19).replace("T", " ") + "</td>";
+                bodyList += "<td>" + transOperator(obj.operator) + "</td>";
+                bodyList += "<td>" + obj.apiBlocklistUsername + "</td>";
+                bodyList += "</tr>";
+            });
+
+            $('#tableBody').empty().append(
+                bodyList
+            );
+        };
+
+        let transOperator = (operator) => {
+            switch (operator) {
+                case 1:
+                    return "新增";
+                case 2:
+                    return "刪除";
+                case 4:
+                    return "查詢";
+            }
+        };
+    </script>
+
+</head>
+<body>
+<div id="topRight" align="left"></div>
+<a class="menu" href="/" onclick="logout()">&nbsp;登出</a>
+<a class="menu" href="/perm/add">使用者管理</a>
+<a class="menu" href="/login/main">查詢黑名單&nbsp;</a>
+<a>查詢 log</a>
+<hr>
+<div class="tit">Log 列表</div>
+<ul>
+    <li>帳號名稱：<input id="ogUserName" size="30"/>
+        <input type="button" id="doSearch" value="查詢"/><br/>
+</ul>
+<table class="table table-bordered">
+    <thead id="tableHead"></thead>
+    <tbody id="tableBody"></tbody>
+</table>
+
+<nav aria-label="Page navigation example">
+    <ul id="pageFunction" class="pagination pg-blue"></ul>
+</nav>
+</body>
+</html>

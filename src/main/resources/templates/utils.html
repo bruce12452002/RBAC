@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>util page</title>
+
+    <style th:fragment="utilCSS">
+        .tit {
+            background-color: pink;
+            text-align: center;
+            font-weight: bold;
+            font-size: 30px;
+        }
+
+        a.menu {
+            background: #e0a800;
+        }
+    </style>
+
+    <script th:fragment="utilJS">
+        var maxPage = 0;
+        let getPages = (result) => {
+            // 分頁判斷
+            if (result.current == 0) return;
+
+            let displayPageNum = 5; // 顯示的頁數
+            let preMiddle = parseInt(displayPageNum / 2); // 中間前面有幾格(不包括中間)
+
+            maxPage = result.pages;
+            let pages = '';
+            if (result.current == 1) {
+                pages += '<li class="page-item" id="onePage"><a class="page-link"><<</a></li>';
+                pages += '<li class="page-item" id="previous"><a class="page-link"><</a></li>';
+            } else {
+                pages += '<li class="page-item" id="onePage"><a class="page-link" tabindex="-1" onclick="show(1)"><<</a></li>';
+                pages += '<li class="page-item" id="previous"><a class="page-link" tabindex="-1" onclick="show(' + (result.current - 1) + ')"><</a></li>';
+            }
+
+            let currSub2 = result.current - preMiddle;
+            if (currSub2 > 0) {
+                if (result.current != result.pages && result.current != result.pages - 1) {
+                    for (let i = currSub2; i < currSub2 + displayPageNum; i++) {
+                        if (i != result.current) {
+                            pages += '<li class="page-item"><a class="page-link" onclick="show(' + i + ')">' + i + '</a></li>';
+                        } else {
+                            pages += '<li class="page-item active"><a class="page-link">' + i + '</a></li>';
+                        }
+                        if (i == result.pages) {
+                            break;
+                        }
+                    }
+                } else {
+                    // 後2頁邏輯
+                    if (result.pages - displayPageNum + 1 > 0) {
+                        for (let i = result.pages - displayPageNum + 1; i <= result.pages; i++) {
+                            if (i != result.current) {
+                                pages += '<li class="page-item"><a class="page-link" onclick="show(' + i + ')">' + i + '</a></li>';
+                            } else {
+                                pages += '<li class="page-item active"><a class="page-link">' + i + '</a></li>';
+                            }
+                        }
+                    } else {
+                        for (let i = 1; i <= result.pages; i++) {
+                            if (i != result.current) {
+                                pages += '<li class="page-item"><a class="page-link" onclick="show(' + i + ')">' + i + '</a></li>';
+                            } else {
+                                pages += '<li class="page-item active"><a class="page-link">' + i + '</a></li>';
+                            }
+                        }
+                    }
+                }
+            } else {
+                // 前2頁邏輯
+                for (let i = 1; i <= displayPageNum; i++) {
+                    if (i != result.current) {
+                        pages += '<li class="page-item"><a class="page-link" onclick="show(' + i + ')">' + i + '</a></li>';
+                    } else {
+                        pages += '<li class="page-item active"><a class="page-link">' + i + '</a></li>';
+                    }
+                    if (i == result.pages) {
+                        break;
+                    }
+                }
+            }
+
+            if (result.current == result.pages) {
+                pages += '<li class="page-item" id="next"><a class="page-link">></a></li>';
+                pages += '<li class="page-item" id="lastPage"><a class="page-link">>></a></li>';
+            } else {
+                pages += '<li class="page-item" id="next"><a class="page-link" tabindex="-1" onclick="show(' + (result.current + 1) + ')">></a></li>';
+                pages += '<li class="page-item" id="lastPage"><a class="page-link" tabindex="-1" onclick="show(' + result.pages + ')">>></a></li>';
+            }
+
+            pages += '&nbsp;&nbsp;跳到第 <input id="jumpPage" type="number" width="20px"> 頁,';
+            pages += '共 ' + result.pages + ' 頁,';
+            pages += '共 ' + result.total + ' 筆';
+            $('#pageFunction').empty().append(pages);
+            jumpPage();
+        };
+
+        let changeColor = () => {
+            rowColor();
+
+            $("tr").bind("mouseover", function () {
+                $(this).css("background-color", "#007bff");
+            })
+
+            $("tr").bind("mouseout", function () {
+                rowColor();
+            })
+        };
+
+        let rowColor = () => {
+            $("tr:odd").css("background-color", "#EEE");
+            $("tr:even").css("background-color", "#FFF");
+            $("tr:eq(0)").css("background-color", "#007bff");
+        };
+
+        let logout = () => {
+            $.ajax({
+                type: "GET",
+                url: "/login/userLogout",
+                beforeSend: () => {
+                    loader = layer.load(1, {
+                        time: 2 * 1000
+                    });
+                }
+            });
+        };
+
+        let jumpPage = () => {
+            $('#jumpPage').change(function() {
+                let allNum = /^\d+$/g;
+                let num = $(this).val();
+
+                if (allNum.test(num) && num != 0 && num <= maxPage) {
+                    show(num);
+                } else {
+                    layer.msg("只能輸入1~" + maxPage, {
+                        time: 2000, icon: 5, shift: 6
+                    });
+                }
+            });
+        };
+    </script>
+</head>

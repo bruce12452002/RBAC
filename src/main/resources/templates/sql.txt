@@ -1,0 +1,51 @@
+CREATE TABLE `og_user` (
+  `id` smallint(6) NOT NULL AUTO_INCREMENT,
+  `name` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `og_user_role` (
+  `id` smallint(6) NOT NULL AUTO_INCREMENT,
+  `user_id` smallint(6) NOT NULL,
+  `role_id` smallint(6) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `og_role` (
+  `id` smallint(6) NOT NULL AUTO_INCREMENT,
+  `name` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+CREATE TABLE `og_role_permission` (
+  `id` smallint(6) NOT NULL AUTO_INCREMENT,
+  `role_id` smallint(6) NOT NULL,
+  `permission_id` smallint(6) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+CREATE TABLE `og_permission` (
+  `id` smallint(6) NOT NULL,
+  `name` varchar(20) NOT NULL,
+  `parent_id` smallint(6) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+
+INSERT INTO `og_role` VALUES (1, '查詢黑名單');
+INSERT INTO `og_role` VALUES (2, '增加黑名單');
+INSERT INTO `og_role` VALUES (3, '刪除黑名單');
+INSERT INTO `og_role` VALUES (4, '查詢操作黑名單 log');
+
+
+INSERT INTO `og_permission` VALUES (1, '系統功能', 0);
+INSERT INTO `og_permission` VALUES (2, '查詢單一黑名單', 1);
+INSERT INTO `og_permission` VALUES (3, '查詢全部黑名單', 1);
+INSERT INTO `og_permission` VALUES (4, '新增黑名單', 1);
+INSERT INTO `og_permission` VALUES (5, '刪除黑名單', 1);
+INSERT INTO `og_permission` VALUES (6, '查詢特定使用者 log', 1);
+INSERT INTO `og_permission` VALUES (7, '查詢全部 log', 1);
